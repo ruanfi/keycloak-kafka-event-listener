@@ -24,22 +24,23 @@ public class KeycloakEventListenerProvider implements EventListenerProvider {
 
 	@Override
 	public void close() {
-		log.debug("Cleaning up");
+		log.trace("Cleaning up");
 	}
 
 	@Override
 	public void onEvent(Event event) {
-		if (nonNull(excludedEvents) && !excludedEvents.contains(event.getType())) {
-			log.debug("Received event {}, with details: {}", event.getType(), event.getDetails());
-			mes.submit(new KeycloakEventListener(event, session));
-			return;
-		}
-		log.debug("Ignoring event type: {}", event.getType());
+		log.debug("Received event {}, with details: {}", event.getType(), event.getDetails());
 	}
 
 	@Override
 	public void onEvent(AdminEvent event, boolean includeRepresentation) {
-		log.debug("Ignoring admin event {}, with operation: {}", event.getResourceType(), event.getOperationType());
-	}
+		log.debug("Received Admin event {}, with operation: {}, with resource path: {}, with representation: {}, with error: {}",
+				event.getResourceType(),
+				event.getOperationType(),
+				event.getResourcePath(),
+				event.getRepresentation(),
+				event.getError());
 
+		mes.submit(new KeycloakAdminEventListener(event, session));
+	}
 }

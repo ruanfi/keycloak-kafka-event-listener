@@ -1,12 +1,11 @@
-version: '3.7'
-services: 
+version: '3.8'
 
+services: 
   postgres:
-    image: juliuskrah/postgres:${TAG}
     container_name: kpostgres
     build: 
-      context: .
-      dockerfile: ./postgres/Dockerfile
+      context: ./postgres
+      dockerfile: Dockerfile
     environment: 
       - POSTGRES_USER=${POSTGRES_USER:-keycloak_user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-1CC0FE5D72748A6AC5FF778ACB4C7201A14B6F6AC17E338CCF373082905C92AE}
@@ -21,6 +20,8 @@ services:
       - ZOOKEEPER_CLIENT_PORT=2181
       - ZOOKEEPER_TICK_TIME=2000
       - ZOOKEEPER_SYNC_LIMIT=2
+    ports:
+      - '2181:2181'
   kafka:
     image: confluentinc/cp-kafka:5.2.1
     container_name: kkafka
@@ -35,7 +36,6 @@ services:
     depends_on: 
       - zookeeper
   keycloak:
-    image: juliuskrah/keycloak:${TAG}
     container_name: kkeycloak
     build:
       context: .
@@ -51,8 +51,8 @@ services:
       - KAFKA_BATCH_SIZE=16384
       - KAFKA_BUFFER_MEMORY=33554432
       - KEYCLOAK_PROVIDER_LOGLEVEL=DEBUG
-      - KEYCLOAK_USER=juliuskrah
-      - KEYCLOAK_PASSWORD=password
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin
       - DB_DATABASE=identity
       - DB_SCHEMA=identity
       - DB_USER=identity

@@ -1,5 +1,6 @@
 package com.juliuskrah.keycloak.provider;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -21,20 +22,22 @@ public class KeycloakManagedTaskListener implements ManagedTaskListener {
 
 	@Override
 	public void taskSubmitted(Future<?> future, ManagedExecutorService executor, Object task) {
-		log.debug("Task is submitted");
+		log.trace("Task is submitted");
 	}
 
 	@Override
 	public void taskAborted(Future<?> future, ManagedExecutorService executor, Object task, Throwable exception) {
-		log.debug("Task is aborted");
+		log.trace("Task is aborted");
 	}
 
 	@Override
 	public void taskDone(Future<?> future, ManagedExecutorService executor, Object task, Throwable exception) {
-		log.debug("Task is done");
+		log.trace("Task is done");
 		try {
-			RecordMetadata metadata = (RecordMetadata) future.get();
-			log.info("Topic '{}' updated", metadata.topic());
+			log.trace("Future status is: done?: {}, canceled?: {}", future.isDone(), future.isCancelled());
+			Optional<RecordMetadata> metadataOpt = (Optional<RecordMetadata>) future.get();
+			metadataOpt.ifPresent(recordMetadata -> log.info("Topic '{}' updated", recordMetadata.topic()));
+
 		} catch (InterruptedException | ExecutionException e) {
 			log.error("Error while listening for done event", e);
 		}
@@ -42,7 +45,6 @@ public class KeycloakManagedTaskListener implements ManagedTaskListener {
 
 	@Override
 	public void taskStarting(Future<?> future, ManagedExecutorService executor, Object task) {
-		log.debug("Task is starting");
+		log.trace("Task is starting");
 	}
-
 }

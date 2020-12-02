@@ -9,6 +9,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.keycloak.events.Event;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakTransactionManager;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.RealmProvider;
 import org.keycloak.models.UserModel;
@@ -37,12 +38,21 @@ public class KeycloakEventListener implements Callable<RecordMetadata>, ManagedT
 	@Override
 	public RecordMetadata call() throws Exception {
 		log.debug("Running task asynchronously");
-		session.getTransactionManager().begin();
+		log.debug("Session is: {}", session);
+		log.debug("Transaction Manager is: {}", session.getTransactionManager());
+		KeycloakSession keycloakSession = session.getKeycloakSessionFactory().create();
+		KeycloakTransactionManager transactionManager = keycloakSession.getTransactionManager();
+		transactionManager.begin();
 		RealmProvider realmProvider = session.realms();
 		RealmModel realm = realmProvider.getRealm(event.getRealmId());
 		UserProvider userProvider = session.users();
 		UserModel user = userProvider.getUserById(event.getUserId(), realm);
-		session.getTransactionManager().commit();
+		log.debug("TX manager is active: {}", keycloakSession);
+		try {
+			transactionManager.commit();
+		} catch (Exception ex) {
+			log.debug("It keep failing all the time! Bro!", ex);
+		}
 		RecordMetadata metadata = KeycloakEventProducer.get() //
 				.send(new ProducerRecord<String, Object>("keycloak.users", //
 						"user", User.toUser(user)))
